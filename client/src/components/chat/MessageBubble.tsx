@@ -5,11 +5,10 @@
 import { useState } from "react";
 import { Message } from "@/types/chat";
 import { cn } from "@/lib/utils";
-import { Edit2, Check, X, RefreshCw, Share2 } from "lucide-react";
+import { Edit2, Check, X } from "lucide-react";
 import { TypingEffect } from "./TypingEffect";
 import { MarkdownContent } from "./MarkdownContent";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
 
 interface MessageBubbleProps {
   message: Message;
@@ -38,7 +37,7 @@ export function MessageBubble({ message, onEdit, onRegenerate }: MessageBubblePr
   return (
     <div
       className={cn(
-        "group w-full py-2 pr-4 pl-4 px-6 sm:px-4 md:px-8 animate-in fade-in slide-in-from-bottom-2 duration-300",
+        "group w-full py-2 px-4 sm:px-6 animate-in fade-in duration-200",
         "bg-black"
       )}
     >
@@ -50,7 +49,7 @@ export function MessageBubble({ message, onEdit, onRegenerate }: MessageBubblePr
           <div
             className={cn(
               "space-y-2 overflow-hidden max-w-[85%] sm:max-w-[80%] md:max-w-[75%] lg:max-w-[70%]",
-              isUser ? "bg-zinc-800 rounded-2xl px-4 py-3" : ""
+              isUser ? "bg-neutral-900 rounded-2xl px-4 py-3 border border-neutral-800/50" : ""
             )}
           >
             {isEditing ? (
@@ -58,32 +57,32 @@ export function MessageBubble({ message, onEdit, onRegenerate }: MessageBubblePr
                 <textarea
                   value={editedContent}
                   onChange={(e) => setEditedContent(e.target.value)}
-                  className="w-full bg-zinc-900 text-white rounded-xl px-4 py-3 text-sm sm:text-[15px] leading-7 border border-white/10 focus:border-white/20 outline-none resize-none min-h-[100px]"
+                  className="w-full bg-neutral-950 text-neutral-200 rounded-xl px-4 py-3 text-sm leading-relaxed border border-neutral-800 focus:border-neutral-700 outline-none resize-none min-h-[100px]"
                   autoFocus
                 />
                 <div className="flex gap-2">
                   <Button
                     size="sm"
                     onClick={handleSaveEdit}
-                    className="bg-white text-black hover:bg-gray-200 h-8"
+                    className="bg-neutral-800 text-neutral-200 hover:bg-neutral-700 h-7 text-xs"
                   >
-                    <Check className="h-3.5 w-3.5 mr-1" />
+                    <Check className="h-3 w-3 mr-1" />
                     Save
                   </Button>
                   <Button
                     size="sm"
                     variant="ghost"
                     onClick={handleCancelEdit}
-                    className="hover:bg-white/10 h-8"
+                    className="text-neutral-500 hover:text-neutral-300 hover:bg-neutral-800/50 h-7 text-xs"
                   >
-                    <X className="h-3.5 w-3.5 mr-1" />
+                    <X className="h-3 w-3 mr-1" />
                     Cancel
                   </Button>
                 </div>
               </div>
             ) : (
               <>
-                <div className="text-sm sm:text-[15px] leading-7 text-white whitespace-pre-wrap break-words">
+                <div className="text-sm leading-relaxed text-neutral-300 whitespace-pre-wrap break-words">
                   {!isUser && message.isTyping && !isTypingComplete ? (
                     <TypingEffect
                       text={message.content}
@@ -95,11 +94,10 @@ export function MessageBubble({ message, onEdit, onRegenerate }: MessageBubblePr
                   )}
                 </div>
 
-                {/* AI Message Actions - Show only model info */}
                 {!isUser && isTypingComplete && (
-                  <div className="flex items-center gap-1 mt-2 pt-2 border-t border-white/10">
-                    <span className="text-[10px] text-gray-500">
-                      {message.agent === 'bard-shopease' ? 'Bard' : message.agent === 'bard-premium' ? 'Bard Premium' : message.agent === 'bard-quick' ? 'Bard Quick' : 'Bard'}
+                  <div className="flex items-center gap-1 mt-2 pt-2 border-t border-neutral-800/50">
+                    <span className="text-[10px] text-neutral-600">
+                      {message.agent === 'bard-shopease' ? 'Standard' : message.agent === 'bard-premium' ? 'Premium' : message.agent === 'bard-quick' ? 'Quick' : 'AI'}
                     </span>
                   </div>
                 )}
@@ -112,9 +110,9 @@ export function MessageBubble({ message, onEdit, onRegenerate }: MessageBubblePr
                 size="sm"
                 variant="ghost"
                 onClick={() => setIsEditing(true)}
-                className="h-7 text-xs text-gray-400 hover:text-white hover:bg-white/10 px-2"
+                className="h-6 text-[10px] text-neutral-600 hover:text-neutral-400 hover:bg-neutral-800/50 px-2"
               >
-                <Edit2 className="h-3 w-3 mr-1" />
+                <Edit2 className="h-2.5 w-2.5 mr-1" />
                 Edit
               </Button>
             </div>

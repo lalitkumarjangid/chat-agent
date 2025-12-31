@@ -20,7 +20,6 @@ export function ChatWidget({ sessionId, onSessionCreated, selectedAgent = 'bard-
   };
 
   const handleRegenerate = (messageId: string) => {
-    // Get the message before this one (which should be the user's prompt)
     const messageIndex = messages.findIndex(m => m.id === messageId);
     if (messageIndex > 0) {
       const userMessage = messages[messageIndex - 1];
@@ -32,7 +31,7 @@ export function ChatWidget({ sessionId, onSessionCreated, selectedAgent = 'bard-
 
   return (
     <div className="flex flex-col h-full bg-black overflow-hidden">
-      {/* Messages Area - Scrollable */}
+      {/* Messages */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden">
         <MessageList
           messages={messages}
@@ -43,15 +42,15 @@ export function ChatWidget({ sessionId, onSessionCreated, selectedAgent = 'bard-
         />
       </div>
         
-      {/* Error Display - Fixed */}
+      {/* Error */}
       {error && (
-        <div className="bg-red-500/10 text-red-400 text-sm p-3 mx-4 mb-2 rounded-md border border-red-500/20 flex-shrink-0">
+        <div className="bg-red-950/50 text-red-400 text-xs p-3 mx-4 mb-2 rounded-lg border border-red-900/50 flex-shrink-0">
           {error}
         </div>
       )}
         
-      {/* Input Area - Fixed at bottom */}
-      <div className="border-t border-white/10 flex-shrink-0">
+      {/* Input */}
+      <div className="flex-shrink-0">
         <ChatInput onSend={(msg) => sendMessage(msg, selectedAgent)} disabled={isLoading} />
       </div>
     </div>

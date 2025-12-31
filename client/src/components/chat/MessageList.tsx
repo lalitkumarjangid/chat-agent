@@ -7,7 +7,7 @@ import { Message } from '@/types/chat';
 import { MessageBubble } from './MessageBubble';
 import { TypingIndicator } from './TypingIndicator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Bot } from 'lucide-react';
+import { Sparkles, ShoppingBag, Clock, CreditCard, HelpCircle } from 'lucide-react';
 
 interface MessageListProps {
   messages: Message[];
@@ -17,6 +17,13 @@ interface MessageListProps {
   onRegenerateMessage?: (messageId: string) => void;
 }
 
+const prompts = [
+  { text: "What are your shipping options?", icon: ShoppingBag },
+  { text: "What's your return policy?", icon: HelpCircle },
+  { text: "What payment methods do you accept?", icon: CreditCard },
+  { text: "What are your business hours?", icon: Clock }
+];
+
 export function MessageList({ messages, isLoading, onEditMessage, onPromptClick, onRegenerateMessage }: MessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -24,43 +31,40 @@ export function MessageList({ messages, isLoading, onEditMessage, onPromptClick,
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
 
-  const examplePrompts = [
-    "What are your shipping options?",
-    "What's your return policy?",
-    "What payment methods do you accept?",
-    "What are your business hours?"
-  ];
-
   return (
     <ScrollArea className="h-full bg-black">
       {messages.length === 0 ? (
-        <div className="flex flex-col items-center justify-center min-h-full px-3 sm:px-4 pb-20 sm:pb-32">
-          <div className="max-w-3xl w-full space-y-6 sm:space-y-10 pt-12 sm:pt-20">
-            {/* Logo */}
+        <div className="flex flex-col items-center justify-center min-h-full px-4 pb-24">
+          <div className="max-w-2xl w-full space-y-8 pt-16">
+            {/* Icon */}
             <div className="flex justify-center">
-
-                <Bot className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
-
+              <div className="h-10 w-10 rounded-xl bg-neutral-900 border border-neutral-800 flex items-center justify-center">
+                <Sparkles className="h-5 w-5 text-neutral-400" />
+              </div>
             </div>
 
             {/* Heading */}
-            <div className="text-center space-y-2">
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-white">
-                How can I help you today?
+            <div className="text-center">
+              <h1 className="text-xl sm:text-2xl font-medium text-neutral-200">
+                How can I help you?
               </h1>
+              <p className="text-sm text-neutral-600 mt-2">
+                Ask me anything about our products and services
+              </p>
             </div>
 
-            {/* Example Prompts */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 max-w-2xl mx-auto">
-              {examplePrompts.map((prompt, index) => (
+            {/* Prompts */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-xl mx-auto">
+              {prompts.map((prompt, index) => (
                 <button
                   key={index}
-                  onClick={() => onPromptClick?.(prompt)}
-                  className="group text-left p-3 sm:p-4 rounded-2xl border border-white/10 hover:bg-white/5 transition-colors"
+                  onClick={() => onPromptClick?.(prompt.text)}
+                  className="flex items-center gap-3 text-left px-4 py-3 rounded-xl border border-neutral-800/50 bg-neutral-900/30 hover:bg-neutral-900/60 hover:border-neutral-700/50 transition-all group"
                 >
-                  <div className="text-xs sm:text-sm text-gray-300">
-                    {prompt}
-                  </div>
+                  <prompt.icon className="w-4 h-4 text-neutral-600 group-hover:text-neutral-500 flex-shrink-0" />
+                  <span className="text-xs text-neutral-400 group-hover:text-neutral-300">
+                    {prompt.text}
+                  </span>
                 </button>
               ))}
             </div>
@@ -79,7 +83,7 @@ export function MessageList({ messages, isLoading, onEditMessage, onPromptClick,
           
           {isLoading && <TypingIndicator />}
           
-          <div ref={bottomRef} className="h-20 sm:h-32" />
+          <div ref={bottomRef} className="h-16 sm:h-24" />
         </div>
       )}
     </ScrollArea>

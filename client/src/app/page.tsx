@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { ChatWidget } from "@/components/chat/ChatWidget";
 import { Sidebar } from "@/components/chat/Sidebar";
-import { PanelLeft, Share2, ChevronDown, Zap, MessageSquare, Brain } from 'lucide-react';
+import { PanelLeft, Share2, ChevronDown, Zap, MessageSquare, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
@@ -23,7 +23,6 @@ export default function Home() {
   const [isAgentDropdownOpen, setIsAgentDropdownOpen] = useState(false);
 
   useEffect(() => {
-    // Fetch agents from backend
     const fetchAgents = async () => {
       try {
         const response = await fetch('/api/chat/agents/list');
@@ -34,11 +33,10 @@ export default function Home() {
         }
       } catch (error) {
         console.error('Failed to fetch agents:', error);
-        // Fallback to default agents
         setAgents([
-          { id: 'bard-quick', name: 'Bard Quick', description: 'Fast responses' },
-          { id: 'bard-shopease', name: 'Bard', description: 'Friendly support assistant' },
-          { id: 'bard-premium', name: 'Bard Premium', description: 'Advanced support' },
+          { id: 'bard-quick', name: 'Quick', description: 'Fast responses' },
+          { id: 'bard-shopease', name: 'Standard', description: 'Balanced assistant' },
+          { id: 'bard-premium', name: 'Premium', description: 'Advanced support' },
         ]);
       } finally {
         setIsLoadingAgents(false);
@@ -60,15 +58,28 @@ export default function Home() {
     if (currentSessionId) {
       const shareUrl = `${window.location.origin}?session=${currentSessionId}`;
       navigator.clipboard.writeText(shareUrl);
-      toast.success('Chat link copied to clipboard!');
+      toast.success('Link copied to clipboard');
     } else {
-      toast.error('Please start a conversation first to share it.');
+      toast.error('Start a conversation first');
+    }
+  };
+
+  const getAgentIcon = (id: string) => {
+    switch(id) {
+      case 'bard-quick':
+        return <Zap className="w-3.5 h-3.5" />;
+      case 'bard-shopease':
+        return <MessageSquare className="w-3.5 h-3.5" />;
+      case 'bard-premium':
+        return <Sparkles className="w-3.5 h-3.5" />;
+      default:
+        return <MessageSquare className="w-3.5 h-3.5" />;
     }
   };
 
   return (
     <div className="flex h-screen bg-black overflow-hidden">
-      {/* Desktop Sidebar - Collapsible */}
+      {/* Desktop Sidebar */}
       <div className="hidden lg:block">
         <Sidebar 
           currentSessionId={currentSessionId}
@@ -98,100 +109,82 @@ export default function Home() {
         />
       </div>
       
-      <div className="flex-1 flex flex-col relative">
-        {/* Header with Agent Selector and Share Button - Fixed */}
-        <div className="sticky top-0 z-40 border-b border-white/10 bg-black px-4 py-3 flex items-center gap-4 flex-shrink-0">
-          {/* Mobile menu button and Agent Selector */}
-          <div className="flex items-center gap-2 flex-1">
-            {/* Mobile menu button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsMobileSidebarOpen(true)}
-              className="lg:hidden text-gray-400 hover:text-white hover:bg-white/10 h-8 w-8"
+      <div className="flex-1 flex flex-col relative min-w-0">
+        {/* Header */}
+        <header className="sticky top-0 z-40 h-12 border-b border-neutral-800/50 bg-black/95 backdrop-blur-sm px-3 flex items-center gap-3 flex-shrink-0">
+          {/* Mobile menu */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsMobileSidebarOpen(true)}
+            className="lg:hidden h-8 w-8 text-neutral-500 hover:text-neutral-300 hover:bg-neutral-800/50"
+          >
+            <PanelLeft className="w-4 h-4" />
+          </Button>
+
+          {/* Agent Selector */}
+          <div className="relative flex-1 max-w-[200px]">
+            <button
+              onClick={() => setIsAgentDropdownOpen(!isAgentDropdownOpen)}
+              className="w-full flex items-center gap-2 h-8 px-2.5 rounded-lg border border-neutral-800 bg-neutral-900/50 hover:bg-neutral-800/50 text-sm transition-colors"
             >
-              <PanelLeft className="w-5 h-5" />
-            </Button>
+              <span className="text-neutral-500">{getAgentIcon(selectedAgent)}</span>
+              <span className="flex-1 text-left text-neutral-300 text-xs font-medium truncate">
+                {agents.find(a => a.id === selectedAgent)?.name || 'Model'}
+              </span>
+              <ChevronDown className={`w-3 h-3 text-neutral-600 transition-transform ${isAgentDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
 
-            {/* Agent Selector */}
-            <div className="relative max-w-xs flex-1">
-              <button
-                onClick={() => setIsAgentDropdownOpen(!isAgentDropdownOpen)}
-                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-sm text-gray-300 hover:text-white transition-all"
-              >
-                <div className="flex-1 truncate text-left">
-                  <div className="text-xs text-gray-500 uppercase tracking-wide">Model</div>
-                  <div className="font-semibold text-white">
-                    {agents.find(a => a.id === selectedAgent)?.name || 'Select Agent'}
-                  </div>
+            {/* Dropdown */}
+            {isAgentDropdownOpen && agents.length > 0 && (
+              <>
+                <div 
+                  className="fixed inset-0 z-40" 
+                  onClick={() => setIsAgentDropdownOpen(false)} 
+                />
+                <div className="absolute top-full mt-1 left-0 w-52 bg-neutral-900 border border-neutral-800 rounded-lg shadow-xl z-50 overflow-hidden">
+                  {agents.map((agent) => (
+                    <button
+                      key={agent.id}
+                      onClick={() => {
+                        setSelectedAgent(agent.id);
+                        setIsAgentDropdownOpen(false);
+                      }}
+                      className={`w-full px-3 py-2.5 text-left flex items-center gap-2.5 transition-colors ${
+                        selectedAgent === agent.id
+                          ? 'bg-neutral-800 text-neutral-200'
+                          : 'text-neutral-400 hover:bg-neutral-800/50 hover:text-neutral-300'
+                      }`}
+                    >
+                      <span className="opacity-60">{getAgentIcon(agent.id)}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-medium">{agent.name}</div>
+                        <div className="text-[10px] text-neutral-600 truncate">{agent.description}</div>
+                      </div>
+                      {selectedAgent === agent.id && (
+                        <div className="w-1.5 h-1.5 bg-neutral-400 rounded-full" />
+                      )}
+                    </button>
+                  ))}
                 </div>
-                <ChevronDown className={`w-4 h-4 flex-shrink-0 transition-transform ${isAgentDropdownOpen ? 'rotate-180' : ''}`} />
-              </button>
-
-              {/* Dropdown Menu */}
-              {isAgentDropdownOpen && agents.length > 0 && (
-                <div className="absolute top-full mt-2 left-0 right-0 bg-zinc-950 border border-white/10 rounded-lg shadow-2xl z-50 overflow-hidden backdrop-blur-sm">
-                  <div className="divide-y divide-white/5">
-                    {agents.map((agent) => {
-                      // Get icon based on agent ID
-                      const getIcon = (id: string) => {
-                        switch(id) {
-                          case 'bard-quick':
-                            return <Zap className="w-4 h-4" />;
-                          case 'bard-shopease':
-                            return <MessageSquare className="w-4 h-4" />;
-                          case 'bard-premium':
-                            return <Brain className="w-4 h-4" />;
-                          default:
-                            return null;
-                        }
-                      };
-                      
-                      return (
-                        <button
-                          key={agent.id}
-                          onClick={() => {
-                            setSelectedAgent(agent.id);
-                            setIsAgentDropdownOpen(false);
-                          }}
-                          className={`w-full px-4 py-3 text-sm transition-colors flex items-start gap-3 ${
-                            selectedAgent === agent.id
-                              ? 'bg-white/10 text-white'
-                              : 'text-gray-300 hover:bg-white/5 hover:text-white'
-                          }`}
-                        >
-                          <div className="flex-shrink-0 mt-0.5 opacity-60">
-                            {getIcon(agent.id)}
-                          </div>
-                          <div className="flex-1 text-left">
-                            <div className="font-semibold">{agent.name}</div>
-                            <div className="text-xs text-gray-500 mt-0.5">{agent.description}</div>
-                          </div>
-                          {selectedAgent === agent.id && (
-                            <div className="flex-shrink-0 w-2 h-2 bg-white rounded-full mt-1.5" />
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
+              </>
+            )}
           </div>
 
-          {/* Share Button */}
+          <div className="flex-1" />
+
+          {/* Share */}
           <Button
             onClick={handleShareChat}
             variant="ghost"
             size="icon"
-            className="text-gray-400 hover:text-white hover:bg-white/10 h-8 w-8 flex-shrink-0"
-            title="Share this chat"
+            className="h-8 w-8 text-neutral-500 hover:text-neutral-300 hover:bg-neutral-800/50"
           >
-            <Share2 className="w-5 h-5" />
+            <Share2 className="w-4 h-4" />
           </Button>
-        </div>
+        </header>
 
-        {/* Chat Widget Container */}
+        {/* Chat */}
         <div className="flex-1 overflow-hidden">
           <ChatWidget 
             sessionId={currentSessionId}
