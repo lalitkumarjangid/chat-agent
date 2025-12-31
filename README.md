@@ -1,9 +1,6 @@
 # 🤖 ShopEase AI Live Chat Agent
 
-> **Spur Take-Home Assignment** - A full-stack AI-powered customer support chat application
-> 
-> **Author:** Lalit Kumar Jangid  
-> **Submitted:** December 31, 2025
+ A full-stack AI-powered customer support chat application
 
 ## 🔗 Live Demo
 
@@ -14,26 +11,7 @@
 
 ---
 
-## 📋 Assignment Requirements Checklist
 
-| Requirement | Status | Implementation |
-|------------|--------|----------------|
-| Chat UI with scrollable messages | ✅ | Next.js + React + Tailwind |
-| User/AI message distinction | ✅ | Different bubble styles & colors |
-| Input + Send button (Enter to send) | ✅ | ChatInput component |
-| Auto-scroll to latest message | ✅ | useEffect with scrollIntoView |
-| Disabled send while loading | ✅ | isLoading state management |
-| "Agent is typing…" indicator | ✅ | TypingIndicator component |
-| POST /chat/message endpoint | ✅ | Express + TypeScript |
-| Persist messages to DB | ✅ | PostgreSQL + Prisma ORM |
-| Session/conversation management | ✅ | UUID-based sessionId |
-| LLM integration | ✅ | Google Gemini 2.5 Flash |
-| FAQ/Domain knowledge | ✅ | Hardcoded in system prompt |
-| Input validation | ✅ | Zod schemas |
-| Error handling | ✅ | Graceful errors + friendly messages |
-| Conversation history on reload | ✅ | GET /chat/:sessionId/history |
-
----
 
 ## 🚀 Quick Start (Run Locally)
 
