@@ -1,4 +1,3 @@
-// src/services/chat.service.ts
 
 import { PrismaClient } from '@prisma/client';
 import { logger } from '../utils/logger';
@@ -9,13 +8,13 @@ import { Message, Conversation } from '../types';
 const prisma = new PrismaClient();
 
 class ChatService {
-  async createConversation(): Promise<Conversation> {
+  async createConversation(userId: string): Promise<Conversation> {
     try {
       const conversation = await prisma.conversation.create({
-        data: {},
+        data: { userId },
       });
       
-      logger.info(`New conversation created: ${conversation.id}`);
+      logger.info(`New conversation created: ${conversation.id} for user ${userId}`);
       return conversation;
     } catch (error) {
       logger.error('Error creating conversation:', error);
@@ -23,10 +22,13 @@ class ChatService {
     }
   }
 
-  async getConversation(sessionId: string): Promise<Conversation | null> {
+  async getConversation(sessionId: string, userId?: string): Promise<Conversation | null> {
     try {
-      const conversation = await prisma.conversation.findUnique({
-        where: { id: sessionId },
+      const conversation = await prisma.conversation.findFirst({
+        where: { 
+          id: sessionId,
+          ...(userId && { userId }),
+        },
         include: {
           messages: {
             orderBy: { createdAt: 'asc' },
@@ -41,9 +43,10 @@ class ChatService {
     }
   }
 
-  async getAllConversations(): Promise<Array<{ id: string; createdAt: Date; updatedAt: Date; preview: string }>> {
+  async getAllConversations(userId: string): Promise<Array<{ id: string; createdAt: Date; updatedAt: Date; preview: string }>> {
     try {
       const conversations = await prisma.conversation.findMany({
+        where: { userId },
         orderBy: { updatedAt: 'desc' },
         include: {
           messages: {
@@ -66,8 +69,17 @@ class ChatService {
     }
   }
 
-  async deleteConversation(sessionId: string): Promise<void> {
+  async deleteConversation(sessionId: string, userId: string): Promise<void> {
     try {
+      // Verify ownership before deleting
+      const conversation = await prisma.conversation.findFirst({
+        where: { id: sessionId, userId },
+      });
+
+      if (!conversation) {
+        throw new Error('Conversation not found or access denied');
+      }
+
       await prisma.conversation.delete({
         where: { id: sessionId },
       });
@@ -75,7 +87,7 @@ class ChatService {
       // Clear cache
       await cacheService.delete(cacheService.getConversationKey(sessionId));
       
-      logger.info(`Conversation deleted: ${sessionId}`);
+      logger.info(`Conversation deleted: ${sessionId} for user ${userId}`);
     } catch (error) {
       logger.error('Error deleting conversation:', error);
       throw new Error('Failed to delete conversation');
@@ -111,25 +123,30 @@ class ChatService {
   async processMessage(
     message: string,
     sessionId?: string,
-    agent?: string
+    agent?: string,
+    userId?: string
   ): Promise<{ reply: string; sessionId: string }> {
     try {
+      if (!userId) {
+        throw new Error('User ID is required');
+      }
+
       // Get or create conversation
       let conversation: Conversation | null = null;
       
       if (sessionId) {
-        conversation = await this.getConversation(sessionId);
+        conversation = await this.getConversation(sessionId, userId);
       }
       
       if (!conversation) {
-        conversation = await this.createConversation();
+        conversation = await this.createConversation(userId);
       }
 
       // Save user message
       await this.saveMessage(conversation.id, 'user', message);
 
       // Get conversation history
-      const history = await this.getConversationHistory(conversation.id);
+      const history = await this.getConversationHistory(conversation.id, userId);
 
       // Generate AI reply with retry logic for rate limiting
       let reply: string;
@@ -158,10 +175,10 @@ class ChatService {
       }
 
       // Save AI reply with agent info
-      await this.saveMessage(conversation.id, 'assistant', reply, agent);
+      await this.saveMessage(conversation.id, 'assistant', reply!, agent);
 
       return {
-        reply,
+        reply: reply!,
         sessionId: conversation.id,
       };
     } catch (error) {
@@ -170,8 +187,18 @@ class ChatService {
     }
   }
 
-  async getConversationHistory(sessionId: string): Promise<Message[]> {
+  async getConversationHistory(sessionId: string, userId?: string): Promise<Message[]> {
     try {
+      // Verify ownership if userId is provided
+      if (userId) {
+        const conversation = await prisma.conversation.findFirst({
+          where: { id: sessionId, userId },
+        });
+        if (!conversation) {
+          throw new Error('Conversation not found or access denied');
+        }
+      }
+
       // Try cache first
       const cacheKey = cacheService.getConversationKey(sessionId);
       const cached = await cacheService.get<Message[]>(cacheKey);

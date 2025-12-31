@@ -1,17 +1,26 @@
-// src/controllers/chat.controller.ts
+
 
 import { Request, Response, NextFunction } from 'express';
 import { chatService } from '../services/chat.service';
 import { logger } from '../utils/logger';
 
 export class ChatController {
+  private getUserId(req: Request): string {
+    const userId = req.headers['x-user-id'] as string;
+    if (!userId) {
+      throw new Error('User ID is required');
+    }
+    return userId;
+  }
+
   async sendMessage(req: Request, res: Response, next: NextFunction) {
     try {
       const { message, sessionId, agent } = req.body;
+      const userId = this.getUserId(req);
 
-      logger.info(`Processing message${sessionId ? ` for session ${sessionId}` : ''} with agent ${agent || 'default'}`);
+      logger.info(`Processing message for user ${userId}${sessionId ? ` session ${sessionId}` : ''} with agent ${agent || 'default'}`);
 
-      const result = await chatService.processMessage(message, sessionId, agent);
+      const result = await chatService.processMessage(message, sessionId, agent, userId);
 
       res.json(result);
     } catch (error) {
@@ -22,10 +31,11 @@ export class ChatController {
   async getHistory(req: Request, res: Response, next: NextFunction) {
     try {
       const { sessionId } = req.params;
+      const userId = this.getUserId(req);
 
-      logger.info(`Fetching history for session ${sessionId}`);
+      logger.info(`Fetching history for user ${userId} session ${sessionId}`);
 
-      const messages = await chatService.getConversationHistory(sessionId);
+      const messages = await chatService.getConversationHistory(sessionId, userId);
 
       res.json({
         sessionId,
@@ -45,8 +55,9 @@ export class ChatController {
 
   async getConversations(req: Request, res: Response, next: NextFunction) {
     try {
-      logger.info('Fetching all conversations');
-      const conversations = await chatService.getAllConversations();
+      const userId = this.getUserId(req);
+      logger.info(`Fetching conversations for user ${userId}`);
+      const conversations = await chatService.getAllConversations(userId);
       res.json({ conversations });
     } catch (error) {
       next(error);
@@ -56,8 +67,9 @@ export class ChatController {
   async deleteConversation(req: Request, res: Response, next: NextFunction) {
     try {
       const { sessionId } = req.params;
-      logger.info(`Deleting conversation ${sessionId}`);
-      await chatService.deleteConversation(sessionId);
+      const userId = this.getUserId(req);
+      logger.info(`Deleting conversation ${sessionId} for user ${userId}`);
+      await chatService.deleteConversation(sessionId, userId);
       res.json({ success: true });
     } catch (error) {
       next(error);

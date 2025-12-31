@@ -1,7 +1,7 @@
-// src/lib/api.ts
 
 import axios from 'axios';
 import { Message } from '@/types/chat';
+import { getUserId } from './user';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
@@ -10,6 +10,15 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+});
+
+// Add user ID to all requests
+api.interceptors.request.use((config) => {
+  const userId = getUserId();
+  if (userId) {
+    config.headers['x-user-id'] = userId;
+  }
+  return config;
 });
 
 export interface SendMessageRequest {
