@@ -101,7 +101,7 @@ export function MessageBubble({ message, onEdit }: MessageBubbleProps) {
                   {!isUser && message.isTyping && !isTypingComplete ? (
                     <TypingEffect
                       text={message.content}
-                      speed={15}
+                      speed={4}
                       onComplete={() => setIsTypingComplete(true)}
                     />
                   ) : (
