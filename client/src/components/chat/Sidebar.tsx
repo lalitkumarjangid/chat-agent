@@ -2,8 +2,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useEffect, useState, useCallback } from 'react';
 import { 
   MessageSquare, 
   Plus, 
@@ -13,11 +12,10 @@ import {
   MapPin,
   Search,
   ChevronRight,
-  Sparkles
+  MoreHorizontal
 } from 'lucide-react';
 import { chatAPI, Conversation } from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { cn } from '@/lib/utils';
 
@@ -49,7 +47,7 @@ export function Sidebar({
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const location = useUserLocation();
 
-  const loadConversations = async () => {
+  const loadConversations = useCallback(async () => {
     try {
       setIsLoading(true);
       const data = await chatAPI.getConversations();
@@ -59,22 +57,18 @@ export function Sidebar({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadConversations();
-  }, [currentSessionId]);
+  }, [currentSessionId, loadConversations]);
 
   const handleDelete = async (e: React.MouseEvent, sessionId: string) => {
     e.stopPropagation();
-    if (!confirm('Delete this conversation?')) return;
-    
     try {
       await chatAPI.deleteConversation(sessionId);
       setConversations(prev => prev.filter(c => c.id !== sessionId));
-      if (sessionId === currentSessionId) {
-        onNewChat();
-      }
+      if (sessionId === currentSessionId) onNewChat();
     } catch (error) {
       console.error('Failed to delete conversation:', error);
     }
@@ -93,14 +87,11 @@ export function Sidebar({
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
+    const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
     if (diffDays === 0) return 'Today';
     if (diffDays === 1) return 'Yesterday';
     if (diffDays < 7) return 'This week';
-    if (diffDays < 30) return 'This month';
-    return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
   const filteredConversations = conversations.filter(conv =>
@@ -114,123 +105,98 @@ export function Sidebar({
     return groups;
   }, {} as Record<string, Conversation[]>);
 
+  const sidebarWidth = isCollapsed ? 'w-[60px]' : 'w-[260px]';
+
   return (
     <>
-      {/* Mobile overlay */}
-      <AnimatePresence>
-        {isMobileOpen && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 0.6 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-40 lg:hidden"
-            onClick={onMobileClose}
-          />
-        )}
-      </AnimatePresence>
+      {/* Overlay */}
+      {isMobileOpen && (
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
+          onClick={onMobileClose}
+        />
+      )}
 
       {/* Sidebar */}
-      <motion.aside 
-        initial={false}
-        animate={{ width: isCollapsed ? 68 : 260 }}
-        transition={{ duration: 0.15, ease: 'easeOut' }}
+      <aside 
         className={cn(
-          "fixed lg:relative inset-y-0 left-0 z-50 h-full",
-          "bg-neutral-950 flex flex-col",
-          "border-r border-neutral-800/50",
-          "transform transition-transform duration-200",
+          "fixed lg:relative inset-y-0 left-0 z-50 flex flex-col",
+          "bg-[#0c0c0c] border-r border-white/[0.06]",
+          "transition-all duration-200 ease-out",
+          sidebarWidth,
           isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         )}
       >
         {/* Header */}
-        <div className="flex-shrink-0 p-3 space-y-3">
-          {/* Top Row */}
-          <div className="flex items-center justify-between h-9">
-            <div className={cn("flex items-center gap-2.5", isCollapsed && "justify-center w-full")}>
-              <div className="h-8 w-8 rounded-lg bg-neutral-900 border border-neutral-800 flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-neutral-400" />
-              </div>
-              {!isCollapsed && (
-                <span className="text-sm font-medium text-neutral-200">ShopEase</span>
-              )}
-            </div>
-
+        <div className="p-3 space-y-2">
+          <div className="flex items-center justify-between h-8">
             {!isCollapsed && (
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="lg:hidden h-8 w-8 text-neutral-500 hover:text-neutral-300 hover:bg-neutral-800/50"
-                  onClick={onMobileClose}
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="hidden lg:flex h-8 w-8 text-neutral-500 hover:text-neutral-300 hover:bg-neutral-800/50"
-                  onClick={onToggleCollapse}
-                >
-                  <PanelLeftClose className="w-4 h-4" />
-                </Button>
-              </div>
+              <span className="text-sm font-semibold text-zinc-100 pl-1">ShopEase</span>
             )}
+            <div className="flex items-center gap-1 ml-auto">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="lg:hidden h-8 w-8 text-zinc-500 hover:text-white hover:bg-white/[0.06]"
+                onClick={onMobileClose}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="hidden lg:flex h-8 w-8 text-zinc-500 hover:text-white hover:bg-white/[0.06]"
+                onClick={onToggleCollapse}
+              >
+                {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
+              </Button>
+            </div>
           </div>
 
-          {/* New Chat */}
-          {!isCollapsed ? (
-            <Button
-              onClick={handleNewChat}
-              className="w-full h-9 bg-neutral-900 hover:bg-neutral-800 text-neutral-300 border border-neutral-800 rounded-lg text-sm font-normal justify-start px-3"
-            >
-              <Plus className="w-4 h-4 mr-2 text-neutral-500" />
-              New chat
-            </Button>
-          ) : (
-            <Button
-              onClick={handleNewChat}
-              variant="ghost"
-              size="icon"
-              className="mx-auto h-9 w-9 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-neutral-400 border border-neutral-800"
-            >
-              <Plus className="w-4 h-4" />
-            </Button>
-          )}
+          {/* New Chat Button */}
+          <Button
+            onClick={handleNewChat}
+            className={cn(
+              "w-full bg-white/[0.06] hover:bg-white/[0.1] text-zinc-200 border-0 transition-colors",
+              isCollapsed ? "h-10 w-10 p-0 mx-auto" : "h-10 justify-start px-3"
+            )}
+          >
+            <Plus className={cn("w-4 h-4", !isCollapsed && "mr-2")} />
+            {!isCollapsed && <span className="text-sm">New chat</span>}
+          </Button>
 
           {/* Search */}
           {!isCollapsed && (
             <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-neutral-600" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600" />
               <input
                 type="text"
-                placeholder="Search..."
+                placeholder="Search chats..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full h-8 bg-neutral-900/50 border border-neutral-800/50 rounded-lg pl-8 pr-3 text-xs text-neutral-300 placeholder:text-neutral-600 focus:outline-none focus:border-neutral-700 transition-colors"
+                className="w-full h-9 bg-white/[0.04] border border-white/[0.06] rounded-lg pl-9 pr-3 text-sm text-zinc-300 placeholder:text-zinc-600 focus:outline-none focus:border-white/[0.12] transition-colors"
               />
             </div>
           )}
         </div>
 
         {/* Conversations */}
-        <ScrollArea className="flex-1 px-2">
+        <div className="flex-1 overflow-y-auto px-2 scrollbar-thin scrollbar-thumb-zinc-800">
           {!isCollapsed ? (
-            <div className="py-1">
+            <div className="py-1 space-y-4">
               {isLoading ? (
-                <div className="flex flex-col items-center justify-center py-16">
-                  <div className="w-5 h-5 border border-neutral-700 border-t-neutral-500 rounded-full animate-spin" />
+                <div className="flex justify-center py-8">
+                  <div className="w-5 h-5 border-2 border-zinc-700 border-t-zinc-400 rounded-full animate-spin" />
                 </div>
               ) : filteredConversations.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 px-4">
-                  <MessageSquare className="w-5 h-5 text-neutral-700 mb-2" />
-                  <p className="text-xs text-neutral-600">No conversations yet</p>
+                <div className="text-center py-8">
+                  <MessageSquare className="w-6 h-6 text-zinc-700 mx-auto mb-2" />
+                  <p className="text-xs text-zinc-600">No conversations</p>
                 </div>
               ) : (
                 Object.entries(groupedConversations).map(([label, convs]) => (
-                  <div key={label} className="mb-3">
-                    <div className="px-2 py-1.5">
-                      <span className="text-[10px] font-medium text-neutral-600 uppercase tracking-wider">{label}</span>
-                    </div>
+                  <div key={label}>
+                    <p className="text-[10px] font-medium text-zinc-600 uppercase tracking-wider px-2 mb-1">{label}</p>
                     <div className="space-y-0.5">
                       {convs.map((conv) => (
                         <div
@@ -241,21 +207,20 @@ export function Sidebar({
                           className={cn(
                             "group flex items-center gap-2 px-2 py-2 rounded-lg cursor-pointer transition-colors",
                             currentSessionId === conv.id
-                              ? 'bg-neutral-800/80 text-neutral-200'
-                              : 'text-neutral-400 hover:bg-neutral-900 hover:text-neutral-300'
+                              ? 'bg-white/[0.08] text-zinc-100'
+                              : 'text-zinc-400 hover:bg-white/[0.04] hover:text-zinc-200'
                           )}
                         >
-                          <MessageSquare className="w-3.5 h-3.5 flex-shrink-0 opacity-50" />
-                          <span className="flex-1 text-xs truncate">
-                            {conv.preview.length > 28 ? `${conv.preview.substring(0, 28)}...` : conv.preview}
+                          <MessageSquare className="w-4 h-4 opacity-50 flex-shrink-0" />
+                          <span className="flex-1 text-sm truncate">
+                            {conv.preview.length > 24 ? `${conv.preview.substring(0, 24)}...` : conv.preview}
                           </span>
-                          
                           {(hoveredId === conv.id || currentSessionId === conv.id) && (
                             <button
                               onClick={(e) => handleDelete(e, conv.id)}
-                              className="p-1 rounded text-neutral-600 hover:text-neutral-400 transition-colors"
+                              className="p-1 rounded hover:bg-white/[0.08] text-zinc-500 hover:text-zinc-300 transition-colors"
                             >
-                              <Trash2 className="w-3 h-3" />
+                              <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           )}
                         </div>
@@ -267,53 +232,51 @@ export function Sidebar({
             </div>
           ) : (
             <div className="flex flex-col items-center gap-1 py-2">
-              {conversations.slice(0, 6).map((conv) => (
+              {conversations.slice(0, 5).map((conv) => (
                 <button
                   key={conv.id}
                   onClick={() => handleSelectChat(conv.id)}
                   title={conv.preview}
                   className={cn(
-                    "w-9 h-9 rounded-lg flex items-center justify-center transition-colors",
+                    "w-10 h-10 rounded-lg flex items-center justify-center transition-colors",
                     currentSessionId === conv.id
-                      ? 'bg-neutral-800 text-neutral-300'
-                      : 'text-neutral-600 hover:bg-neutral-900 hover:text-neutral-400'
+                      ? 'bg-white/[0.08] text-zinc-200'
+                      : 'text-zinc-500 hover:bg-white/[0.04] hover:text-zinc-300'
                   )}
                 >
-                  <MessageSquare className="w-3.5 h-3.5" />
+                  <MessageSquare className="w-4 h-4" />
                 </button>
               ))}
+              {conversations.length > 5 && (
+                <button className="w-10 h-10 rounded-lg flex items-center justify-center text-zinc-600 hover:bg-white/[0.04]">
+                  <MoreHorizontal className="w-4 h-4" />
+                </button>
+              )}
             </div>
           )}
-        </ScrollArea>
+        </div>
 
-        {/* Footer - Location sticky at bottom */}
-        <div className="flex-shrink-0 border-t border-neutral-800/50 p-3">
-          {!isCollapsed ? (
-            <>
-              {!location.loading && location.city && (
-                <div className="flex items-center gap-2.5 px-2 py-2 rounded-lg bg-neutral-900/50">
-                  <MapPin className="w-3.5 h-3.5 text-neutral-600 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[10px] text-neutral-600 leading-none">Location</p>
-                    <p className="text-xs text-neutral-400 truncate mt-0.5">
-                      {location.city}, {location.country}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </>
-          ) : (
-            <Button
-              variant="ghost"
-              size="icon"
+        {/* Footer */}
+        <div className="p-3 border-t border-white/[0.06]">
+          {!isCollapsed && !location.loading && location.city && (
+            <div className="flex items-center gap-2 px-2 py-2 rounded-lg bg-white/[0.03]">
+              <MapPin className="w-4 h-4 text-zinc-600" />
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] text-zinc-600">Location</p>
+                <p className="text-xs text-zinc-400 truncate">{location.city}, {location.country}</p>
+              </div>
+            </div>
+          )}
+          {isCollapsed && (
+            <button
               onClick={onToggleCollapse}
-              className="mx-auto h-9 w-9 rounded-lg text-neutral-600 hover:text-neutral-400 hover:bg-neutral-900"
+              className="w-10 h-10 mx-auto rounded-lg flex items-center justify-center text-zinc-600 hover:bg-white/[0.04] hover:text-zinc-400"
             >
               <ChevronRight className="w-4 h-4" />
-            </Button>
+            </button>
           )}
         </div>
-      </motion.aside>
+      </aside>
     </>
   );
 }

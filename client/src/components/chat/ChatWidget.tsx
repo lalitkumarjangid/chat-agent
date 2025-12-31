@@ -5,6 +5,7 @@
 import { useChat } from '@/hooks/useChat';
 import { MessageList } from './MessageList';
 import { ChatInput } from './ChatInput';
+import { AlertCircle } from 'lucide-react';
 
 interface ChatWidgetProps {
   sessionId: string | null;
@@ -30,9 +31,9 @@ export function ChatWidget({ sessionId, onSessionCreated, selectedAgent = 'bard-
   };
 
   return (
-    <div className="flex flex-col h-full bg-black overflow-hidden">
+    <div className="flex flex-col h-full bg-[#0a0a0a] overflow-hidden">
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-zinc-800">
         <MessageList
           messages={messages}
           isLoading={isLoading}
@@ -44,8 +45,9 @@ export function ChatWidget({ sessionId, onSessionCreated, selectedAgent = 'bard-
         
       {/* Error */}
       {error && (
-        <div className="bg-red-950/50 text-red-400 text-xs p-3 mx-4 mb-2 rounded-lg border border-red-900/50 flex-shrink-0">
-          {error}
+        <div className="mx-4 mb-3 flex items-center gap-2.5 bg-red-500/10 text-red-400 text-sm p-3 rounded-lg border border-red-500/20 flex-shrink-0">
+          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          <span>{error}</span>
         </div>
       )}
         
