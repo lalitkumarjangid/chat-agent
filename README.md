@@ -5,8 +5,7 @@
 ## 🔗 Live Demo
 
 - **Frontend:** [https://chat-agent-client-ten.vercel.app](https://chat-agent-client-ten.vercel.app)
-- **Backend API:** [https://chat-agent-server.vercel.app](https://chat-agent-server.vercel.app) *(Update with actual URL)*
-- **Health Check:** [https://chat-agent-server.vercel.app/api/health](https://chat-agent-server.vercel.app/api/health)
+- **Backend API:** [https://chat-agent-server.vercel.app/api/health](https://chat-agent-server.vercel.app/api/health) 
 - **GitHub:** [https://github.com/lalitkumarjangid/chat-agent](https://github.com/lalitkumarjangid/chat-agent)
 
 ---
@@ -474,4 +473,4 @@ For questions about this submission:
 
 ---
 
-**Built with ❤️ for Spur - December 2025**
+**Built with ❤️**
