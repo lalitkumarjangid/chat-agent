@@ -5,6 +5,9 @@ export interface Message {
   role: 'user' | 'assistant';
   content: string;
   createdAt: string;
+  agent?: string;
+  isTyping?: boolean;
+  isEditing?: boolean;
 }
 
 export interface ChatState {

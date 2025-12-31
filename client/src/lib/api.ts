@@ -15,6 +15,7 @@ const api = axios.create({
 export interface SendMessageRequest {
   message: string;
   sessionId?: string;
+  agent?: string;
 }
 
 export interface SendMessageResponse {
@@ -27,6 +28,17 @@ export interface GetHistoryResponse {
   messages: Message[];
 }
 
+export interface Conversation {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  preview: string;
+}
+
+export interface GetConversationsResponse {
+  conversations: Conversation[];
+}
+
 export const chatAPI = {
   sendMessage: async (data: SendMessageRequest): Promise<SendMessageResponse> => {
     const response = await api.post<SendMessageResponse>('/chat/message', data);
@@ -36,6 +48,15 @@ export const chatAPI = {
   getHistory: async (sessionId: string): Promise<GetHistoryResponse> => {
     const response = await api.get<GetHistoryResponse>(`/chat/${sessionId}/history`);
     return response.data;
+  },
+
+  getConversations: async (): Promise<GetConversationsResponse> => {
+    const response = await api.get<GetConversationsResponse>('/chat/conversations');
+    return response.data;
+  },
+
+  deleteConversation: async (sessionId: string): Promise<void> => {
+    await api.delete(`/chat/${sessionId}`);
   },
 
   healthCheck: async (): Promise<{ status: string; timestamp: string }> => {

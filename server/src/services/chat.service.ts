@@ -41,10 +41,52 @@ class ChatService {
     }
   }
 
+  async getAllConversations(): Promise<Array<{ id: string; createdAt: Date; updatedAt: Date; preview: string }>> {
+    try {
+      const conversations = await prisma.conversation.findMany({
+        orderBy: { updatedAt: 'desc' },
+        include: {
+          messages: {
+            orderBy: { createdAt: 'asc' },
+            take: 1,
+            where: { role: 'user' },
+          },
+        },
+      });
+      
+      return conversations.map(conv => ({
+        id: conv.id,
+        createdAt: conv.createdAt,
+        updatedAt: conv.updatedAt,
+        preview: conv.messages[0]?.content || 'New conversation',
+      }));
+    } catch (error) {
+      logger.error('Error fetching conversations:', error);
+      throw new Error('Failed to fetch conversations');
+    }
+  }
+
+  async deleteConversation(sessionId: string): Promise<void> {
+    try {
+      await prisma.conversation.delete({
+        where: { id: sessionId },
+      });
+      
+      // Clear cache
+      await cacheService.delete(cacheService.getConversationKey(sessionId));
+      
+      logger.info(`Conversation deleted: ${sessionId}`);
+    } catch (error) {
+      logger.error('Error deleting conversation:', error);
+      throw new Error('Failed to delete conversation');
+    }
+  }
+
   async saveMessage(
     conversationId: string,
     role: 'user' | 'assistant',
-    content: string
+    content: string,
+    agent?: string
   ): Promise<Message> {
     try {
       const message = await prisma.message.create({
@@ -52,6 +94,7 @@ class ChatService {
           conversationId,
           role,
           content,
+          agent,
         },
       });
       
@@ -67,7 +110,8 @@ class ChatService {
 
   async processMessage(
     message: string,
-    sessionId?: string
+    sessionId?: string,
+    agent?: string
   ): Promise<{ reply: string; sessionId: string }> {
     try {
       // Get or create conversation
@@ -87,11 +131,34 @@ class ChatService {
       // Get conversation history
       const history = await this.getConversationHistory(conversation.id);
 
-      // Generate AI reply
-      const reply = await llmService.generateReply(history, message);
+      // Generate AI reply with retry logic for rate limiting
+      let reply: string;
+      let retries = 0;
+      const maxRetries = 3;
+      
+      while (retries < maxRetries) {
+        try {
+          reply = await llmService.generateReply(history, message, agent);
+          break;
+        } catch (error: any) {
+          if (error.message?.includes('429') || error.message?.includes('high demand')) {
+            retries++;
+            if (retries < maxRetries) {
+              // Exponential backoff: 2s, 4s, 8s
+              const delay = Math.pow(2, retries) * 1000;
+              logger.info(`Rate limited. Retrying in ${delay}ms (attempt ${retries}/${maxRetries})`);
+              await new Promise(resolve => setTimeout(resolve, delay));
+            } else {
+              throw new Error('Service is experiencing high demand. Please try again in a few moments.');
+            }
+          } else {
+            throw error;
+          }
+        }
+      }
 
-      // Save AI reply
-      await this.saveMessage(conversation.id, 'assistant', reply);
+      // Save AI reply with agent info
+      await this.saveMessage(conversation.id, 'assistant', reply, agent);
 
       return {
         reply,

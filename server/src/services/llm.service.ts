@@ -5,26 +5,62 @@ import { config } from '../config';
 import { logger } from '../utils/logger';
 import { SYSTEM_PROMPT, MAX_HISTORY_MESSAGES } from '../config/constants';
 import { Message } from '../types';
+import { getAgentById } from '../config/agents';
 
 class LLMService {
   private genAI: GoogleGenerativeAI;
-  private model: any;
+  private models: Map<string, any> = new Map();
 
   constructor() {
     this.genAI = new GoogleGenerativeAI(config.gemini.apiKey);
-    this.model = this.genAI.getGenerativeModel({ 
-      model: 'gemini-2.0-flash-exp',
+    const modelName = config.gemini.model;
+    
+    logger.info(`Initializing Gemini model: ${modelName}`);
+    
+    // Initialize default model
+    this.models.set('default', this.genAI.getGenerativeModel({ 
+      model: modelName,
       generationConfig: {
         temperature: 0.7,
         topK: 40,
         topP: 0.95,
         maxOutputTokens: 1024,
       },
-    });
+    }));
   }
 
-  async generateReply(history: Message[], userMessage: string): Promise<string> {
+  private getModel(agentId?: string) {
+    if (!agentId) {
+      return this.models.get('default');
+    }
+
+    if (this.models.has(agentId)) {
+      return this.models.get(agentId);
+    }
+
+    const agent = getAgentById(agentId);
+    if (!agent) {
+      return this.models.get('default');
+    }
+
+    const model = this.genAI.getGenerativeModel({ 
+      model: agent.model,
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 1024,
+      },
+    });
+
+    this.models.set(agentId, model);
+    return model;
+  }
+
+  async generateReply(history: Message[], userMessage: string, agentId?: string): Promise<string> {
     try {
+      const model = this.getModel(agentId);
+      const agent = agentId ? getAgentById(agentId) : null;
+      const systemPrompt = agent?.systemPrompt || SYSTEM_PROMPT;
+      
       const recentHistory = history.slice(-MAX_HISTORY_MESSAGES);
       
       // Build conversation history
@@ -34,7 +70,7 @@ class LLMService {
       }));
 
       // Create chat with history
-      const chat = this.model.startChat({
+      const chat = model.startChat({
         history: [
           {
             role: 'user',
@@ -46,7 +82,7 @@ class LLMService {
           },
           {
             role: 'user',
-            parts: [{ text: SYSTEM_PROMPT }],
+            parts: [{ text: systemPrompt }],
           },
           {
             role: 'model',
@@ -68,8 +104,10 @@ class LLMService {
       logger.error('LLM generation error:', error);
       
       // Handle specific error types
-      if (error.status === 429) {
-        return "I'm experiencing high demand right now. Please try again in a moment.";
+      if (error.status === 429 || error.message?.includes('429')) {
+        const retryDelay = error.errorDetails?.find((d: any) => d['@type']?.includes('RetryInfo'))?.retryDelay;
+        logger.warn(`Rate limit exceeded. Agent: ${agentId || 'default'}. Retry delay: ${retryDelay || 'unknown'}`);
+        throw new Error('429-high demand');
       }
       
       if (error.status === 401 || error.message?.includes('API key')) {

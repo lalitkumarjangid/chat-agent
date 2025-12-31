@@ -7,11 +7,11 @@ import { logger } from '../utils/logger';
 export class ChatController {
   async sendMessage(req: Request, res: Response, next: NextFunction) {
     try {
-      const { message, sessionId } = req.body;
+      const { message, sessionId, agent } = req.body;
 
-      logger.info(`Processing message${sessionId ? ` for session ${sessionId}` : ''}`);
+      logger.info(`Processing message${sessionId ? ` for session ${sessionId}` : ''} with agent ${agent || 'default'}`);
 
-      const result = await chatService.processMessage(message, sessionId);
+      const result = await chatService.processMessage(message, sessionId, agent);
 
       res.json(result);
     } catch (error) {
@@ -41,6 +41,27 @@ export class ChatController {
       status: 'ok',
       timestamp: new Date().toISOString(),
     });
+  }
+
+  async getConversations(req: Request, res: Response, next: NextFunction) {
+    try {
+      logger.info('Fetching all conversations');
+      const conversations = await chatService.getAllConversations();
+      res.json({ conversations });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async deleteConversation(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { sessionId } = req.params;
+      logger.info(`Deleting conversation ${sessionId}`);
+      await chatService.deleteConversation(sessionId);
+      res.json({ success: true });
+    } catch (error) {
+      next(error);
+    }
   }
 }
 

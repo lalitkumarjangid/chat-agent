@@ -11,6 +11,7 @@ export const messageSchema = z.object({
     .max(MAX_MESSAGE_LENGTH, `Message too long (max ${MAX_MESSAGE_LENGTH} characters)`)
     .transform((val) => val.trim()),
   sessionId: z.string().uuid().optional(),
+  agent: z.string().optional(),
 });
 
 export const validateChatMessage = (

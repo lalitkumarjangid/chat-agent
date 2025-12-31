@@ -6,9 +6,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { Message, ChatState } from '@/types/chat';
 import { chatAPI } from '@/lib/api';
 
-const SESSION_STORAGE_KEY = 'chat_session_id';
-
-export function useChat() {
+export function useChat(sessionId: string | null, onSessionCreated?: (sessionId: string) => void) {
   const [state, setState] = useState<ChatState>({
     messages: [],
     sessionId: null,
@@ -16,14 +14,19 @@ export function useChat() {
     error: null,
   });
 
-  // Load session ID from localStorage on mount
+  // Load history when sessionId changes
   useEffect(() => {
-    const savedSessionId = localStorage.getItem(SESSION_STORAGE_KEY);
-    if (savedSessionId) {
-      setState((prev) => ({ ...prev, sessionId: savedSessionId }));
-      loadHistory(savedSessionId);
+    if (sessionId) {
+      loadHistory(sessionId);
+    } else {
+      // Clear messages when starting a new chat
+      setState((prev) => ({
+        ...prev,
+        messages: [],
+        sessionId: null,
+      }));
     }
-  }, []);
+  }, [sessionId]);
 
   const loadHistory = async (sessionId: string) => {
     try {
@@ -38,7 +41,7 @@ export function useChat() {
     }
   };
 
-  const sendMessage = useCallback(async (content: string) => {
+  const sendMessage = useCallback(async (content: string, agent?: string) => {
     if (!content.trim()) return;
 
     setState((prev) => ({ ...prev, isLoading: true, error: null }));
@@ -59,20 +62,23 @@ export function useChat() {
     try {
       const data = await chatAPI.sendMessage({
         message: content,
-        sessionId: state.sessionId || undefined,
+        sessionId: sessionId || undefined,
+        agent,
       });
 
-      // Save session ID
-      if (data.sessionId) {
-        localStorage.setItem(SESSION_STORAGE_KEY, data.sessionId);
+      // Notify parent of new session
+      if (data.sessionId && data.sessionId !== sessionId) {
+        onSessionCreated?.(data.sessionId);
       }
 
-      // Add AI response
+      // Add AI response with typing effect
       const aiMessage: Message = {
         id: `ai-${Date.now()}`,
         role: 'assistant',
         content: data.reply,
         createdAt: new Date().toISOString(),
+        agent,
+        isTyping: true,
       };
 
       setState((prev) => ({
@@ -94,23 +100,31 @@ export function useChat() {
         messages: prev.messages.filter((m) => m.id !== userMessage.id),
       }));
     }
-  }, [state.sessionId]);
+  }, [sessionId, onSessionCreated]);
 
-  const clearChat = useCallback(() => {
-    localStorage.removeItem(SESSION_STORAGE_KEY);
-    setState({
-      messages: [],
-      sessionId: null,
-      isLoading: false,
-      error: null,
-    });
-  }, []);
+  const editMessage = useCallback(async (messageId: string, newContent: string, agent?: string) => {
+    // Find the message to edit
+    const messageIndex = state.messages.findIndex(m => m.id === messageId);
+    if (messageIndex === -1) return;
+
+    // Remove messages after the edited one
+    const messagesToKeep = state.messages.slice(0, messageIndex);
+    
+    setState((prev) => ({
+      ...prev,
+      messages: messagesToKeep,
+      isLoading: true,
+    }));
+
+    // Resend the edited message
+    await sendMessage(newContent, agent);
+  }, [state.messages, sendMessage]);
 
   return {
     messages: state.messages,
     isLoading: state.isLoading,
     error: state.error,
     sendMessage,
-    clearChat,
+    editMessage,
   };
 }
