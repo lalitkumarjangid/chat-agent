@@ -1,179 +1,285 @@
 # 🤖 ShopEase AI Live Chat Agent
 
-A full-stack AI-powered customer support chat application built for the Spur take-home assignment. Features real-time chat with Google Gemini 2.0 Flash AI, persistent conversations, and a beautiful modern UI.
+> **Spur Take-Home Assignment** - A full-stack AI-powered customer support chat application
+> 
+> **Author:** Lalit Kumar Jangid  
+> **Submitted:** December 31, 2025
 
-## 🎯 Project Overview
+## 🔗 Live Demo
 
-This project demonstrates a production-ready AI chat agent that can handle customer support queries for a fictional e-commerce store "ShopEase". The agent has built-in knowledge about shipping policies, returns, payment methods, and business hours.
+- **Frontend:** [https://chat-agent-client-ten.vercel.app](https://chat-agent-client-ten.vercel.app)
+- **Backend API:** [https://chat-agent-server.vercel.app](https://chat-agent-server.vercel.app) *(Update with actual URL)*
+- **Health Check:** [https://chat-agent-server.vercel.app/api/health](https://chat-agent-server.vercel.app/api/health)
+- **GitHub:** [https://github.com/lalitkumarjangid/chat-agent](https://github.com/lalitkumarjangid/chat-agent)
 
-### ✨ Key Features
+---
 
-- 🤖 **AI-Powered Responses** - Google Gemini 2.0 Flash integration
-- 💾 **Persistent Conversations** - Sessions stored in PostgreSQL
-- ⚡ **Redis Caching** - Upstash Redis for performance optimization
-- 🎨 **Modern UI** - Built with Next.js, Tailwind CSS, shadcn/ui
-- 🔒 **Input Validation** - Zod schemas with comprehensive error handling
-- 📱 **Responsive Design** - Works seamlessly on mobile and desktop
-- 🔄 **Session Management** - Conversations persist across page reloads
-- ⏱️ **Typing Indicators** - Real-time UI feedback
+## 📋 Assignment Requirements Checklist
 
-## 🏗️ Architecture
+| Requirement | Status | Implementation |
+|------------|--------|----------------|
+| Chat UI with scrollable messages | ✅ | Next.js + React + Tailwind |
+| User/AI message distinction | ✅ | Different bubble styles & colors |
+| Input + Send button (Enter to send) | ✅ | ChatInput component |
+| Auto-scroll to latest message | ✅ | useEffect with scrollIntoView |
+| Disabled send while loading | ✅ | isLoading state management |
+| "Agent is typing…" indicator | ✅ | TypingIndicator component |
+| POST /chat/message endpoint | ✅ | Express + TypeScript |
+| Persist messages to DB | ✅ | PostgreSQL + Prisma ORM |
+| Session/conversation management | ✅ | UUID-based sessionId |
+| LLM integration | ✅ | Google Gemini 2.5 Flash |
+| FAQ/Domain knowledge | ✅ | Hardcoded in system prompt |
+| Input validation | ✅ | Zod schemas |
+| Error handling | ✅ | Graceful errors + friendly messages |
+| Conversation history on reload | ✅ | GET /chat/:sessionId/history |
 
-```
-Monorepo Structure:
-├── client/          Next.js 15 + React 18 + TypeScript
-├── server/          Express + TypeScript + Prisma
-└── package.json     Workspace configuration
-```
+---
 
-### Tech Stack
-
-**Frontend:**
-- Next.js 15 (App Router)
-- React 18
-- TypeScript
-- Tailwind CSS
-- shadcn/ui components
-- Axios for API calls
-- Lucide React icons
-
-**Backend:**
-- Node.js + Express
-- TypeScript
-- Prisma ORM
-- PostgreSQL database
-- Upstash Redis (caching)
-- Google Gemini 2.0 Flash API
-- Zod (validation)
-
-## 🚀 Getting Started
+## 🚀 Quick Start (Run Locally)
 
 ### Prerequisites
 
-- Node.js 18+ installed
-- PostgreSQL database (local or cloud)
-- Upstash Redis account (free tier works)
-- Google Gemini API key ([Get one here](https://makersuite.google.com/app/apikey))
+- **Node.js 18+**
+- **PostgreSQL** database (local or cloud like [Neon](https://neon.tech), [Supabase](https://supabase.com))
+- **Google Gemini API Key** - [Get one free here](https://makersuite.google.com/app/apikey)
+- **Upstash Redis** (optional) - [Get free account](https://upstash.com)
 
-### Installation
-
-1. **Clone the repository**
+### Step-by-Step Setup
 
 ```bash
+# 1. Clone the repository
+git clone https://github.com/lalitkumarjangid/chat-agent.git
 cd chat-agent
-```
 
-2. **Install dependencies**
-
-```bash
-# Install root dependencies
+# 2. Install all dependencies
 npm install
-
-# Install server dependencies
 cd server && npm install && cd ..
-
-# Install client dependencies
 cd client && npm install && cd ..
+
+# 3. Setup environment variables (see below)
+
+# 4. Setup database
+cd server
+npx prisma generate
+npx prisma migrate dev --name init
+cd ..
+
+# 5. Run the application
+npm run dev
 ```
 
-3. **Setup environment variables**
+### Environment Variables
 
-**Server (.env):**
-
-Create `server/.env`:
+**Server (`server/.env`):**
 
 ```env
 # Server
 PORT=3001
 NODE_ENV=development
 
-# Database (replace with your PostgreSQL connection string)
-DATABASE_URL="postgresql://user:password@localhost:5432/chat_agent"
+# Database (PostgreSQL connection string)
+DATABASE_URL="postgresql://user:password@host:5432/database"
+DIRECT_URL="postgresql://user:password@host:5432/database"
 
-# Redis (Upstash - get from https://upstash.com/)
+# Redis (Upstash - optional but recommended)
 UPSTASH_REDIS_REST_URL="https://your-redis.upstash.io"
 UPSTASH_REDIS_REST_TOKEN="your-token"
 
-# Google Gemini API (get from https://makersuite.google.com/app/apikey)
+# LLM - Google Gemini API
 GEMINI_API_KEY="your-gemini-api-key"
+GEMINI_MODEL="gemini-2.5-flash"
 
 # CORS
 FRONTEND_URL="http://localhost:3000"
 ```
 
-**Client (.env.local):**
-
-Create `client/.env.local`:
+**Client (`client/.env`):**
 
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:3001/api
 ```
 
-4. **Setup Database**
+### Access the Application
 
-```bash
-cd server
+| Service | URL |
+|---------|-----|
+| Frontend | http://localhost:3000 |
+| Backend API | http://localhost:3001/api |
+| Health Check | http://localhost:3001/api/health |
+| Prisma Studio | `npx prisma studio` (port 5555) |
 
-# Generate Prisma Client
-npx prisma generate
+---
 
-# Run migrations
-npx prisma migrate dev --name init
+## 🏗️ Architecture Overview
 
-# (Optional) Open Prisma Studio to view data
-npx prisma studio
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         FRONTEND                                │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │  Next.js 15 + React 18 + TypeScript                      │  │
+│  │  ├── ChatWidget (main container)                         │  │
+│  │  ├── MessageList (scrollable messages)                   │  │
+│  │  ├── MessageBubble (user/AI distinction)                 │  │
+│  │  ├── ChatInput (input + send button)                     │  │
+│  │  ├── TypingIndicator ("Agent is typing...")              │  │
+│  │  └── Sidebar (conversation list)                         │  │
+│  └──────────────────────────────────────────────────────────┘  │
+│                              │                                  │
+│                     Axios HTTP Requests                         │
+└──────────────────────────────┼──────────────────────────────────┘
+                               ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                         BACKEND                                 │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │  Express.js + TypeScript                                 │  │
+│  │                                                          │  │
+│  │  Routes → Controllers → Services → Data Layer            │  │
+│  │                                                          │  │
+│  │  ├── chat.routes.ts      (API endpoints)                 │  │
+│  │  ├── chat.controller.ts  (request handling)              │  │
+│  │  ├── chat.service.ts     (business logic)                │  │
+│  │  ├── llm.service.ts      (Gemini API wrapper)            │  │
+│  │  └── cache.service.ts    (Redis caching)                 │  │
+│  │                                                          │  │
+│  │  Middleware:                                             │  │
+│  │  ├── validation.ts       (Zod schemas)                   │  │
+│  │  ├── errorHandler.ts     (graceful errors)               │  │
+│  │  └── cors.ts             (CORS configuration)            │  │
+│  └──────────────────────────────────────────────────────────┘  │
+│                    │                    │                       │
+└────────────────────┼────────────────────┼───────────────────────┘
+                     ▼                    ▼
+            ┌──────────────┐      ┌──────────────┐
+            │  PostgreSQL  │      │    Redis     │
+            │   (Prisma)   │      │  (Upstash)   │
+            │              │      │              │
+            │ Conversation │      │   Caching    │
+            │   Message    │      │              │
+            └──────────────┘      └──────────────┘
 ```
 
-5. **Run the application**
+### Backend Structure (Layered Architecture)
 
-From the root directory:
-
-```bash
-# Run both frontend and backend concurrently
-npm run dev
+```
+server/src/
+├── config/           # Configuration & constants
+│   ├── index.ts      # Environment variables
+│   ├── constants.ts  # App constants (prompts, limits)
+│   └── agents.ts     # AI agent configurations
+├── controllers/      # HTTP request handlers
+│   └── chat.controller.ts
+├── middleware/       # Express middleware
+│   ├── validation.ts # Zod input validation
+│   ├── errorHandler.ts
+│   └── cors.ts
+├── routes/           # API route definitions
+│   ├── index.ts
+│   └── chat.routes.ts
+├── services/         # Business logic layer
+│   ├── chat.service.ts   # Conversation management
+│   ├── llm.service.ts    # LLM API wrapper
+│   └── cache.service.ts  # Redis caching
+├── types/            # TypeScript interfaces
+├── utils/            # Helpers & utilities
+│   ├── logger.ts
+│   └── helpers.ts
+├── app.ts            # Express app setup
+└── index.ts          # Entry point
 ```
 
-Or run separately:
+---
 
-```bash
-# Terminal 1 - Backend
-cd server && npm run dev
+## 🤖 LLM Integration Details
 
-# Terminal 2 - Frontend
-cd client && npm run dev
+### Provider: Google Gemini 2.5 Flash
+
+**Why Gemini?**
+- Fast response times (important for chat UX)
+- Generous free tier (1500 requests/day)
+- Good balance of quality and speed
+- Easy to integrate via `@google/generative-ai` SDK
+
+### How It Works
+
+```typescript
+// llm.service.ts - generateReply function
+async generateReply(history: Message[], userMessage: string): Promise<string> {
+  const model = this.genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+  
+  // Include conversation history for context
+  const chat = model.startChat({
+    history: [
+      { role: 'user', parts: [{ text: SYSTEM_PROMPT }] },
+      { role: 'model', parts: [{ text: 'I understand...' }] },
+      ...recentHistory.map(msg => ({
+        role: msg.role === 'user' ? 'user' : 'model',
+        parts: [{ text: msg.content }],
+      })),
+    ],
+  });
+  
+  const result = await chat.sendMessage(userMessage);
+  return result.response.text();
+}
 ```
 
-The application will be available at:
-- **Frontend:** http://localhost:3000
-- **Backend API:** http://localhost:3001/api
-- **Health Check:** http://localhost:3001/api/health
+### System Prompt Design
+
+The AI is configured as a customer support agent for "ShopEase" with knowledge about:
+- **Shipping Policy:** Free over $50, USA/Canada only, 5-7 days standard
+- **Return Policy:** 30-day window, original packaging required
+- **Payment Methods:** Cards, PayPal, Apple/Google Pay
+- **Business Hours:** Mon-Fri 9AM-6PM, Sat 10AM-4PM EST
+
+### Cost Control & Guardrails
+
+| Guardrail | Implementation |
+|-----------|----------------|
+| Max tokens | `maxOutputTokens: 1024` |
+| History limit | Last 10 messages only |
+| Input validation | Max 2000 characters |
+| Rate limit retry | Exponential backoff (3 retries) |
+| Error handling | Graceful fallback messages |
+
+---
 
 ## 📚 API Documentation
 
-### Endpoints
+### POST /api/chat/message
 
-#### 1. Send Message
-```http
-POST /api/chat/message
-Content-Type: application/json
+Send a message and get AI response.
 
+**Request:**
+```json
 {
   "message": "What's your return policy?",
-  "sessionId": "optional-uuid"
+  "sessionId": "optional-uuid",
+  "agent": "bard-shopease"
 }
+```
 
-Response:
+**Response (200):**
+```json
 {
   "reply": "Our return policy allows returns within 30 days...",
   "sessionId": "550e8400-e29b-41d4-a716-446655440000"
 }
 ```
 
-#### 2. Get Conversation History
-```http
-GET /api/chat/:sessionId/history
+**Error (400):**
+```json
+{
+  "error": "Message cannot be empty",
+  "code": "VALIDATION_ERROR"
+}
+```
 
-Response:
+### GET /api/chat/:sessionId/history
+
+Get conversation history.
+
+**Response:**
+```json
 {
   "sessionId": "550e8400-e29b-41d4-a716-446655440000",
   "messages": [
@@ -183,262 +289,211 @@ Response:
       "content": "What's your return policy?",
       "createdAt": "2025-12-25T10:00:00Z"
     },
-    ...
+    {
+      "id": "msg-uuid-2",
+      "role": "assistant",
+      "content": "Our return policy allows...",
+      "createdAt": "2025-12-25T10:00:01Z"
+    }
   ]
 }
 ```
 
-#### 3. Health Check
-```http
-GET /api/health
+### GET /api/chat/conversations
 
-Response:
-{
-  "status": "ok",
-  "timestamp": "2025-12-25T10:00:00Z"
+List all conversations.
+
+### DELETE /api/chat/:sessionId
+
+Delete a conversation.
+
+### GET /api/health
+
+Health check endpoint.
+
+---
+
+## 🗄️ Database Schema
+
+```prisma
+model Conversation {
+  id        String    @id @default(uuid())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  metadata  Json?
+  messages  Message[]
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           MessageRole  // 'user' | 'assistant'
+  content        String       @db.Text
+  agent          String?
+  createdAt      DateTime     @default(now())
+}
+
+enum MessageRole {
+  user
+  assistant
 }
 ```
 
-## 🎨 UI Components
+---
 
-The chat interface includes:
-- **ChatWidget** - Main container with gradient header
-- **MessageList** - Scrollable message area with auto-scroll
-- **MessageBubble** - Individual messages with user/AI distinction
-- **ChatInput** - Input field with character count and send button
-- **TypingIndicator** - Animated dots when AI is generating response
+## 🛡️ Robustness & Error Handling
 
-## 🧪 Testing the Application
+### Input Validation (Zod)
 
-### Test Queries
+```typescript
+const messageSchema = z.object({
+  message: z.string()
+    .min(1, 'Message cannot be empty')
+    .max(2000, 'Message too long (max 2000 characters)')
+    .transform(val => val.trim()),
+  sessionId: z.string().uuid().optional(),
+  agent: z.string().optional(),
+});
+```
 
-Try these questions to test the AI agent:
+### Error Scenarios Handled
+
+| Scenario | Handling |
+|----------|----------|
+| Empty message | 400 error with clear message |
+| Message too long | 400 error, suggests truncating |
+| Invalid sessionId | Creates new conversation |
+| LLM API timeout | Retry with exponential backoff |
+| LLM rate limit (429) | Up to 3 retries with delays |
+| Database error | Graceful error message |
+| Invalid API key | Friendly error, logs details |
+
+### Frontend Error Display
+
+All errors are caught and displayed as toast notifications, never crashing the UI.
+
+---
+
+## 🧪 Test Queries
+
+Try these to test the AI agent:
 
 1. "What are your shipping options?"
 2. "How do I return an item?"
 3. "Do you ship to Canada?"
 4. "What payment methods do you accept?"
 5. "What are your business hours?"
+6. "I received a defective product, what should I do?"
 
-### Error Handling Tests
+---
 
-- Send empty message (validation error)
-- Send very long message (>2000 chars)
-- Disconnect from database (graceful error)
-- Invalid API key (fallback message)
+## 🚢 Deployment Guide
 
-## 🗄️ Database Schema
+### Deploy to Vercel (Monorepo)
 
-```prisma
-model Conversation {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  metadata  Json?
-  messages  Message[]
-}
+Since this is a monorepo, deploy **two separate Vercel projects**:
 
-model Message {
-  id             String      @id @default(uuid())
-  conversationId String
-  conversation   Conversation @relation(...)
-  role           MessageRole  // 'user' | 'assistant'
-  content        String      @db.Text
-  createdAt      DateTime    @default(now())
-}
+**1. Server (Backend):**
+- Import repo → Set root directory to `server`
+- Add environment variables:
+  - `NODE_ENV=production`
+  - `DATABASE_URL=your-postgres-url`
+  - `UPSTASH_REDIS_REST_URL=your-redis-url`
+  - `UPSTASH_REDIS_REST_TOKEN=your-token`
+  - `GEMINI_API_KEY=your-key`
+  - `FRONTEND_URL=https://your-client.vercel.app`
+
+**2. Client (Frontend):**
+- Import repo → Set root directory to `client`
+- Add environment variable:
+  - `NEXT_PUBLIC_API_URL=https://your-server.vercel.app/api`
+
+### Database Setup (Production)
+
+Use [Neon](https://neon.tech) or [Supabase](https://supabase.com) for free PostgreSQL.
+
+```bash
+# Run migrations on production DB
+DATABASE_URL="your-prod-url" npx prisma migrate deploy
 ```
 
-## 🚢 Deployment
+---
 
-### Option 1: Vercel (Recommended)
+## 📝 Trade-offs & Design Decisions
 
-**Backend:**
-1. Push code to GitHub
-2. Import project to Vercel
-3. Set root directory to `server`
-4. Add environment variables in Vercel dashboard
-5. Deploy
+### Decisions Made
 
-**Frontend:**
-1. Import project to Vercel (same repo)
-2. Set root directory to `client`
-3. Add `NEXT_PUBLIC_API_URL` environment variable
-4. Deploy
+1. **React instead of Svelte** - Faster development with existing knowledge
+2. **Google Gemini instead of OpenAI** - Higher free tier limits
+3. **REST instead of WebSocket** - Simpler for the scope, works well
+4. **Prisma ORM** - Type-safe, great DX, auto migrations
+5. **Monorepo structure** - Easier to manage for this project size
 
-**Database:**
-- Use [Neon](https://neon.tech/) (free PostgreSQL)
-- Or [Supabase](https://supabase.com/)
-- Update `DATABASE_URL` in Vercel env vars
+### Current Limitations
 
-### Option 2: Render
+1. **No Authentication** - As per requirements
+2. **Polling-based updates** - No real-time push notifications
+3. **Single region** - No global edge deployment
+4. **Basic rate limiting** - Server-side only
 
-**Backend:**
-1. Create new Web Service
-2. Build command: `cd server && npm install && npm run build`
-3. Start command: `cd server && npm start`
-4. Add environment variables
+---
 
-**Frontend:**
-1. Create new Static Site
-2. Build command: `cd client && npm install && npm run build`
-3. Publish directory: `client/.next`
+## 🔮 If I Had More Time...
 
-## 📁 Project Structure
+1. **WebSocket Integration** - Real-time bidirectional communication
+2. **Streaming Responses** - Show AI typing character by character
+3. **Admin Dashboard** - View all conversations, analytics
+4. **Message Search** - Full-text search through conversations
+5. **Message Reactions** - 👍/👎 for AI response feedback
+6. **Multi-agent Selection** - Let users choose different AI personalities
+7. **Voice Input** - Speech-to-text integration
+8. **Export Feature** - Download conversation history
+9. **Rate Limiting** - Redis-based sliding window
+10. **E2E Tests** - Playwright or Cypress tests
+
+---
+
+## 📁 Full Project Structure
 
 ```
 chat-agent/
 ├── client/                      # Next.js Frontend
 │   ├── src/
-│   │   ├── app/                # App Router pages
-│   │   │   ├── globals.css
-│   │   │   ├── layout.tsx
-│   │   │   └── page.tsx
+│   │   ├── app/                # App Router
 │   │   ├── components/
-│   │   │   ├── chat/          # Chat-specific components
-│   │   │   │   ├── ChatWidget.tsx
-│   │   │   │   ├── MessageList.tsx
-│   │   │   │   ├── MessageBubble.tsx
-│   │   │   │   ├── ChatInput.tsx
-│   │   │   │   └── TypingIndicator.tsx
-│   │   │   └── ui/            # shadcn/ui components
-│   │   │       ├── button.tsx
-│   │   │       ├── input.tsx
-│   │   │       ├── card.tsx
-│   │   │       └── scroll-area.tsx
-│   │   ├── hooks/
-│   │   │   └── useChat.ts     # Custom chat hook
-│   │   ├── lib/
-│   │   │   ├── api.ts         # API client
-│   │   │   └── utils.ts       # Utilities
-│   │   └── types/
-│   │       └── chat.ts        # TypeScript types
-│   ├── package.json
-│   └── tailwind.config.ts
+│   │   │   ├── chat/          # Chat components
+│   │   │   └── ui/            # shadcn/ui
+│   │   ├── hooks/             # Custom hooks
+│   │   ├── lib/               # API client, utils
+│   │   └── types/             # TypeScript types
+│   └── package.json
 │
 ├── server/                      # Express Backend
 │   ├── src/
-│   │   ├── config/
-│   │   │   ├── index.ts       # Configuration
-│   │   │   └── constants.ts   # Constants & prompts
-│   │   ├── controllers/
-│   │   │   └── chat.controller.ts
-│   │   ├── middleware/
-│   │   │   ├── validation.ts
-│   │   │   ├── errorHandler.ts
-│   │   │   └── cors.ts
-│   │   ├── routes/
-│   │   │   ├── index.ts
-│   │   │   └── chat.routes.ts
-│   │   ├── services/
-│   │   │   ├── chat.service.ts
-│   │   │   ├── llm.service.ts
-│   │   │   └── cache.service.ts
-│   │   ├── utils/
-│   │   │   ├── logger.ts
-│   │   │   └── helpers.ts
-│   │   ├── types/
-│   │   │   └── index.ts
-│   │   ├── app.ts
-│   │   └── index.ts
-│   ├── prisma/
-│   │   └── schema.prisma
+│   │   ├── config/            # Configuration
+│   │   ├── controllers/       # Request handlers
+│   │   ├── middleware/        # Validation, errors
+│   │   ├── routes/            # API routes
+│   │   ├── services/          # Business logic
+│   │   ├── types/             # TypeScript types
+│   │   └── utils/             # Helpers
+│   ├── prisma/                # Database schema
 │   └── package.json
 │
-├── package.json                 # Root workspace config
-├── .gitignore
-├── .env.example
-├── PLANNING.md                  # Technical planning doc
-└── README.md                    # This file
+├── package.json                # Workspace root
+├── DEPLOYMENT.md              # Deployment guide
+└── README.md                  # This file
 ```
 
-## 🔧 Development Notes
+---
 
-### Prisma Commands
+## 📞 Contact
 
-```bash
-# Generate Prisma Client
-npx prisma generate
-
-# Create a migration
-npx prisma migrate dev --name description
-
-# Reset database
-npx prisma migrate reset
-
-# Open Prisma Studio
-npx prisma studio
-```
-
-### Useful Scripts
-
-```bash
-# Root level
-npm run dev          # Run both frontend & backend
-npm run build        # Build both apps
-
-# Server only
-cd server
-npm run dev          # Development with hot reload
-npm run build        # Compile TypeScript
-npm start            # Run production build
-
-# Client only
-cd client
-npm run dev          # Development server
-npm run build        # Production build
-npm start            # Run production build
-```
-
-## 🛡️ Security & Validation
-
-- ✅ Input validation with Zod schemas
-- ✅ Message length limits (max 2000 characters)
-- ✅ CORS configuration
-- ✅ Environment variable validation
-- ✅ No exposed secrets in code
-- ✅ Error messages sanitized in production
-- ✅ SQL injection protection (Prisma ORM)
-
-## 📝 Trade-offs & Future Improvements
-
-### Current Limitations
-
-1. **No Authentication** - Single-user system (as per requirements)
-2. **Basic Rate Limiting** - Can be enhanced with Redis-based sliding window
-3. **REST API** - WebSocket would be better for real-time typing indicators
-4. **Simple Caching** - Could implement more sophisticated cache invalidation
-
-### If I Had More Time...
-
-1. **WebSocket Integration** - Real-time bidirectional communication
-2. **Admin Dashboard** - View all conversations, analytics
-3. **Conversation Search** - Full-text search through messages
-4. **Message Reactions** - Thumbs up/down for AI responses
-5. **Multi-language Support** - i18n for the UI
-6. **A/B Testing** - Test different prompts and UI variations
-7. **Analytics Dashboard** - Response times, common queries, sentiment
-8. **Voice Input** - Speech-to-text integration
-9. **File Uploads** - Support for image attachments
-10. **Export Conversations** - Download chat history
-
-## 🤝 Contributing
-
-This is a take-home assignment, but if you'd like to suggest improvements:
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Submit a pull request
-
-## 📄 License
-
-MIT License - feel free to use this code for learning purposes.
-
-## 📞 Support
-
-For questions about this project, please open an issue on GitHub or contact [your-email@example.com]
+For questions about this submission:
+- **GitHub:** [lalitkumarjangid](https://github.com/lalitkumarjangid)
+- **Repository:** [chat-agent](https://github.com/lalitkumarjangid/chat-agent)
 
 ---
 
 **Built with ❤️ for Spur - December 2025**
-# chat-agent
